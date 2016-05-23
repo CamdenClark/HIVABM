@@ -1,10 +1,17 @@
 extensions [ nw ]
+globals [
+  new-infect
+  infected
+  susceptible
+]
 turtles-own
 [
   infect-status
+  new-infect-status
 ]
 to setup
   clear-all
+  reset-ticks
   set-default-shape turtles "circle"
   make-node nobody
   make-node turtle 0
@@ -16,7 +23,46 @@ to setup
     resize-nodes
   ]
   distribute
+  stats
   set-color
+end
+
+to infect
+  ask n-of 30 links
+  [
+    set new-infect False
+    ask end1 [
+      if infect-status = 1 [
+        set new-infect True
+      ]
+    ]
+    ask end2 [
+      if infect-status = 0 and new-infect [
+        if random-float 1 < .062 [
+          set new-infect-status 1
+        ]
+      ]
+    ]
+    set new-infect False
+    ask end2 [
+      if infect-status = 1 [
+        set new-infect True
+      ]
+    ]
+    ask end1 [
+      if infect-status = 0 and new-infect [
+        if random-float 1 < .062 [
+          set new-infect-status 1
+        ]
+      ]
+    ]
+  ]
+  ask turtles [
+    set infect-status new-infect-status
+  ]
+  set-color
+  stats
+  tick
 end
 
 to distribute
@@ -24,9 +70,11 @@ to distribute
   [
     ifelse random-float 1 < .18 [
       set infect-status 1
+      set new-infect-status 1
     ]
     [
       set infect-status 0
+      set new-infect-status 0
     ]
   ]
 end
@@ -42,6 +90,11 @@ to set-color
   ]
 end
 
+to stats
+  set infected count turtles with [ infect-status = 1 ]
+  set susceptible count turtles with [ infect-status = 0]
+
+end
 ;;The following code was adapted from Uri Wilensky's model of preferred attachment. This provides
 ;;a network structure fairly similar to that of sexual networks (scale-free)
 
@@ -140,11 +193,39 @@ init-pop
 init-pop
 0
 500
-200
+500
 1
 1
 NIL
 HORIZONTAL
+
+BUTTON
+117
+45
+183
+78
+NIL
+infect\n
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+MONITOR
+34
+170
+190
+215
+NIL
+infected / count turtles
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
