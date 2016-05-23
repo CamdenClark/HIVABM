@@ -8,6 +8,8 @@ turtles-own
 [
   infect-status
   new-infect-status
+  pref
+  circumcised
 ]
 to setup
   clear-all
@@ -28,31 +30,38 @@ to setup
 end
 
 to infect
-  ask n-of 30 links
+  ask turtles
   [
-    set new-infect False
-    ask end1 [
-      if infect-status = 1 [
-        set new-infect True
-      ]
-    ]
-    ask end2 [
-      if infect-status = 0 and new-infect [
-        if random-float 1 < .062 [
-          set new-infect-status 1
+    if random-float 1 < prob-engage [
+      ; select a random link
+      ; if one is infected and another is not...
+      ; then see if we get infected.
+      ask one-of my-links [
+        set new-infect False
+        ask end1 [
+          if infect-status = 1 [
+            set new-infect True
+          ]
         ]
-      ]
-    ]
-    set new-infect False
-    ask end2 [
-      if infect-status = 1 [
-        set new-infect True
-      ]
-    ]
-    ask end1 [
-      if infect-status = 0 and new-infect [
-        if random-float 1 < .062 [
-          set new-infect-status 1
+        ask end2 [
+          if infect-status = 0 and new-infect [
+            if random-float 1 < get-prob self [
+              set new-infect-status 1
+            ]
+          ]
+        ]
+        set new-infect False
+        ask end2 [
+          if infect-status = 1 [
+            set new-infect True
+          ]
+        ]
+        ask end1 [
+          if infect-status = 0 and new-infect [
+            if random-float 1 < get-prob self [
+              set new-infect-status 1
+            ]
+          ]
         ]
       ]
     ]
@@ -81,18 +90,91 @@ end
 
 to set-color
   ask turtles [
-    ifelse infect-status = 1 [
+    ;ifelse infect-status = 1 [
+     ; set color red
+    ;]
+    ;[
+     ; set color green
+    ;]
+    if pref = 1 [
       set color red
     ]
-    [
+    if pref = 0 [
+      set color blue
+    ]
+    if pref = -1 [
       set color green
     ]
   ]
 end
 
+to-report get-prob [ temp-agent ] ;;WIP
+  let final 0
+  ask temp-agent [
+    if pref = -1 [
+      set final .0098
+    ]
+    if pref = 1 [
+      ifelse random-float 1 < condom-use [
+        ifelse circumcised [ ; http://www.who.int/hiv/events/artprevention/jin_per.pdf
+          ; These rates come from an estimated per contact probability of HIV transmission
+          ;  with unprotected anal intercourse.
+          set final .0011
+        ]
+        [
+          set final .0062
+        ]
+      ]
+      [
+        set final .0004 ; http://aje.oxfordjournals.org/content/150/3/306.long
+      ]
+    ]
+
+    if pref = 0 [
+      set final .0098
+    ]
+  ]
+  report final
+end
+
+
+to-report get-pref [ temp-pref ]  ; This function reports an agent with a role that matches with an agent.
+  ; These statistics are gathered from: http://link.springer.com/article/10.1007/s10508-010-9623-2#/page-1
+  ; That is a survey of MSM in San Francisco
+  let temp random-float 1
+  if temp-pref = 0 [ ; If versatile...
+    if temp < .41 [
+      report 0
+    ]
+    if temp <= .62 [
+      report -1
+    ]
+    if temp <= 1 [
+      report 1
+    ]
+  ]
+  if temp-pref = 1 [
+    ifelse temp < .66 [
+      report 0
+    ]
+    [
+      report -1
+    ]
+  ]
+  if temp-pref = -1 [
+    ifelse temp < .5 [
+      report 0
+    ]
+    [
+      report 1
+    ]
+  ]
+  report temp-pref
+end
+
 to stats
   set infected count turtles with [ infect-status = 1 ]
-  set susceptible count turtles with [ infect-status = 0]
+  set susceptible count turtles with [ infect-status = 0 ]
 
 end
 ;;The following code was adapted from Uri Wilensky's model of preferred attachment. This provides
@@ -103,13 +185,33 @@ to-report find-partner ; This finds a partner to make a node with
 end
 
 to make-node [old-node] ;;This process makes a node by finding a partner
+  let temp-pref 0
+  if old-node != nobody [
+    ask old-node [
+      set temp-pref pref
+    ]
+  ]
   create-turtles 1
   [
     set color green
     set size 0.5
+    set pref get-pref temp-pref
+    ifelse random-float 1 < .65 [
+; According to the National Hospital Discharge Survey, which documents circumcisions performed in hospitals but would not ascertain
+; circumcisions performed outside of the hospital for religious reasons, 65% of newborns were circumcised in 1999.
+; http://rectalmicrobicides.org/docs/10.1371_journal.pmed.0040223-L.pdf
+      set circumcised True
+    ]
+    [
+      set circumcised False
+    ]
     if old-node != nobody
     [
-      create-link-with old-node [ set color green ]
+      create-link-with old-node
+      [
+        set color green
+
+      ]
       move-to old-node
       fd 8
     ]
@@ -217,15 +319,45 @@ NIL
 1
 
 MONITOR
-34
-170
-190
-215
+25
+277
+181
+322
 NIL
 infected / count turtles
 17
 1
 11
+
+SLIDER
+19
+145
+191
+178
+condom-use
+condom-use
+0
+1
+0.45
+.001
+1
+NIL
+HORIZONTAL
+
+SLIDER
+18
+206
+190
+239
+prob-engage
+prob-engage
+0
+1
+0.5
+.01
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
