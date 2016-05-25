@@ -97,13 +97,28 @@ to set-color
      ; set color green
     ;]
     if pref = 1 [
-      set color red
+      ifelse infect-status = 1 [
+        set color red - 1
+      ]
+      [
+        set color red + 1
+      ]
     ]
     if pref = 0 [
-      set color blue
+      ifelse infect-status = 1 [
+        set color blue - 1
+      ]
+      [
+        set color blue + 1
+      ]
     ]
     if pref = -1 [
-      set color green
+      ifelse infect-status = 1 [
+        set color green - 1
+      ]
+      [
+        set color green + 1
+      ]
     ]
   ]
 end
@@ -196,9 +211,9 @@ to make-node [old-node] ;;This process makes a node by finding a partner
     set color green
     set size 0.5
     set pref get-pref temp-pref
-    ifelse random-float 1 < .65 [
-; According to the National Hospital Discharge Survey, which documents circumcisions performed in hospitals but would not ascertain
-; circumcisions performed outside of the hospital for religious reasons, 65% of newborns were circumcised in 1999.
+    ifelse random-float 1 < .79 [
+; Data from the National Health and Nutrition Examination Surveys from 1999 to 2004 indicated that the
+; overall prevalence of circumcision among adult males in the US was 79% and varied by race/ethnicity
 ; http://rectalmicrobicides.org/docs/10.1371_journal.pmed.0040223-L.pdf
       set circumcised True
     ]
@@ -353,7 +368,7 @@ prob-engage
 prob-engage
 0
 1
-0.5
+0.15
 .01
 1
 NIL
